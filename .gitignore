@@ -1,0 +1,31 @@
+# Ambiente virtual e segredos
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+.session_secret
+
+# Dados e backups privados
+instance/*
+!instance/.gitkeep
+backups/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Arquivos gerados e cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+previews/
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

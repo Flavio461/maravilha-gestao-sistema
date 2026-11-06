@@ -1,0 +1,11 @@
+TELA 1: ENTRADA PRINCIPAL OU MENU INICIAL
+
+A tela Visão geral resume vendas, pagamentos recebidos, encomendas abertas e entregas pendentes. O menu lateral permite acessar Nova venda, Vendas, Clientes, Encomendas e Entregas. O botão verde Nova venda destaca a operação principal. Os ícones têm tamanho uniforme, os rótulos são claros e o menu funciona também em celulares e por teclado.
+
+TELA 2: EXECUÇÃO DA FUNCIONALIDADE CENTRAL
+
+O formulário Nova venda permite selecionar o cliente, informar materiais, valor total e data. Se a opção Incluir encomenda for ativada, aparecem os campos de data prevista, observações e endereço para entrega. Salvar venda confirma a operação; Cancelar retorna ao início. Campos obrigatórios, instruções curtas, validação dos dados e foco visível auxiliam o funcionário.
+
+TELA 3: ALERTAS, LISTAGEM OU RESULTADOS
+
+Após o cadastro, a tela da venda mostra a confirmação, o cliente, os materiais, o total, o valor recebido, o saldo pendente e a encomenda relacionada. O funcionário pode registrar um pagamento ou abrir uma nova venda. Situações como Pagamento pendente e Em preparação são indicadas por texto, não apenas pela cor, permitindo compreender o resultado e continuar o atendimento.

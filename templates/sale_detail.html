@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-heading"><div><h1>Venda #{{'%04d'|format(sale.id)}}</h1><p>{{sale.sale_date|date_br}}</p></div><a class="btn btn-outline-secondary" href="{{url_for('sales')}}">Voltar às vendas</a></div>
+{% if request.args.get('criado') %}<div class="success-hero" role="status"><span class="success-check" aria-hidden="true">✓</span><strong>Venda registrada.</strong><a href="{{url_for('sale_new')}}">Nova venda</a></div>{% endif %}
+<div class="result-layout">
+  <section class="surface-card result-main">
+    <div class="section-heading result-title"><h2>Resumo da venda</h2><span class="status-pill {{'status-success' if remaining==0 else 'status-warning'}}">{{'Pago' if remaining==0 else 'Pagamento pendente'}}</span></div>
+    <div class="result-client"><span class="result-label">Cliente</span><strong>{{sale.client_name or 'Consumidor final'}}</strong></div>
+    <div class="result-client"><span class="result-label">Materiais</span><strong>{{sale.description}}</strong></div>
+    <div class="payment-summary"><div><span>Valor total</span><strong>{{brl(sale.amount_cents)}}</strong></div><div><span>Recebido</span><strong>{{brl(paid)}}</strong></div><div class="remaining-line"><span>Saldo a receber</span><strong>{{brl(remaining)}}</strong></div></div>
+    {% if order %}<div class="linked-order"><div class="linked-title"><div><strong>Encomenda #{{'%04d'|format(order.id)}}</strong><p>Prevista para {{order.expected_date|date_br}}</p></div></div><span class="status-pill status-warning">{{status_label(order.status)}}</span></div>
+      {% if delivery %}<div class="linked-delivery"><span>Entrega</span><strong>{{status_label(delivery.status)}}</strong><small>{{delivery.address}}</small></div>{% endif %}
+    {% endif %}
+    <div class="section-heading history-heading"><h2>Pagamentos</h2></div>
+    <div class="table-responsive"><table class="data-table"><thead><tr><th>DATA</th><th>FORMA</th><th>VALOR</th></tr></thead><tbody>
+      {% for item in payments %}<tr><td>{{item.received_on|date_br}}</td><td>{{{'pix':'PIX','dinheiro':'Dinheiro','cartao':'Cartão','outro':'Outro'}.get(item.method,item.method)}}</td><td class="bold-cell">{{brl(item.amount_cents)}}</td></tr>{% else %}<tr><td colspan="3" class="empty-cell">Nenhum pagamento registrado.</td></tr>{% endfor %}
+    </tbody></table></div>
+  </section>
+  <aside class="result-side"><div class="surface-card pay-card">
+    <div class="section-heading"><h2>Registrar pagamento</h2></div>
+    {% if remaining>0 and sale.status != 'cancelada' %}<form action="{{url_for('payment_new',sale_id=sale.id)}}" method="post" class="small-form"><input type="hidden" name="_csrf" value="{{csrf_token()}}">
+      <div class="field"><label for="pay_amount">Valor recebido (R$) *</label><input id="pay_amount" name="amount" class="form-control" required inputmode="decimal" placeholder="0,00"><p class="field-hint">Até {{brl(remaining)}}</p></div>
+      <div class="field"><label for="method">Forma de pagamento *</label><select class="form-select" id="method" name="method" required><option value="pix">PIX</option><option value="dinheiro">Dinheiro</option><option value="cartao">Cartão</option><option value="outro">Outro</option></select></div>
+      <div class="field"><label for="received_on">Data *</label><input type="date" class="form-control" id="received_on" name="received_on" required value="{{today()}}"></div>
+      <button type="submit" class="btn btn-primary btn-fill">Confirmar pagamento</button>
+    </form>{% else %}<div class="fully-paid"><strong>Pagamento concluído.</strong><p>Não há saldo pendente.</p></div>{% endif %}
+  </div></aside>
+</div>
+{% endblock %}

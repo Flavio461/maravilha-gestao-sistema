@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-heading">
+  <div><h1>Visão geral</h1><p>Acompanhe as atividades da loja.</p></div>
+  <a class="btn btn-primary btn-lg" href="{{url_for('sale_new')}}"><svg class="ui-icon" aria-hidden="true"><use href="#i-plus"/></svg>Nova venda</a>
+</div>
+<div class="metrics-grid">
+  <div class="metric-card"><div class="metric-top">Total em vendas</div><div class="metric-value">{{brl(metrics.total_sold)}}</div></div>
+  <div class="metric-card"><div class="metric-top">Pagamentos recebidos</div><div class="metric-value">{{brl(metrics.total_received)}}</div></div>
+  <div class="metric-card"><div class="metric-top">Encomendas abertas</div><div class="metric-value">{{metrics.open_orders}}</div></div>
+  <div class="metric-card"><div class="metric-top">Entregas pendentes</div><div class="metric-value">{{metrics.open_deliveries}}</div></div>
+</div>
+<div class="content-grid">
+  <section class="surface-card content-main">
+    <div class="section-heading"><h2>Vendas recentes</h2><a href="{{url_for('sales')}}" class="text-action">Ver todas</a></div>
+    <div class="table-responsive"><table class="data-table"><thead><tr><th>VENDA</th><th>CLIENTE</th><th>DATA</th><th>VALOR</th><th>SITUAÇÃO</th><th aria-label="Abrir venda"></th></tr></thead><tbody>
+      {% for sale in recent %}<tr><td><a class="id-link" href="{{url_for('sale_detail',sale_id=sale.id)}}">#{{'%04d'|format(sale.id)}}</a></td><td>{{sale.client_name or 'Consumidor final'}}</td><td>{{sale.sale_date|date_br}}</td><td class="bold-cell">{{brl(sale.amount_cents)}}</td><td><span class="status-pill {{'status-success' if sale.status=='concluida' else 'status-neutral'}}">{{status_label(sale.status)}}</span></td><td><a class="table-arrow" aria-label="Abrir venda {{sale.id}}" href="{{url_for('sale_detail',sale_id=sale.id)}}">Ver</a></td></tr>
+      {% else %}<tr><td colspan="6" class="empty-cell">Nenhuma venda ainda. <a href="{{url_for('sale_new')}}">Registrar venda</a></td></tr>{% endfor %}
+    </tbody></table></div>
+  </section>
+  <aside class="surface-card content-side">
+    <div class="section-heading"><h2>Próximas encomendas</h2><a href="{{url_for('orders')}}" class="text-action">Ver todas</a></div>
+    <div class="upcoming-list">
+      {% for item in upcoming %}<div class="upcoming-item"><div class="upcoming-date"><strong>{{item.expected_date[8:10]}}</strong><span>{{ {'01':'JAN','02':'FEV','03':'MAR','04':'ABR','05':'MAI','06':'JUN','07':'JUL','08':'AGO','09':'SET','10':'OUT','11':'NOV','12':'DEZ'}.get(item.expected_date[5:7],'MÊS') }}</span></div><div class="upcoming-copy"><strong>{{item.client_name or 'Cliente'}}</strong><small>{{item.description|truncate(42,True)}}</small><span class="status-pill status-warning">{{status_label(item.status)}}</span></div></div>
+      {% else %}<p class="empty-side">Nenhuma encomenda pendente.</p>{% endfor %}
+    </div>
+  </aside>
+</div>
+{% endblock %}

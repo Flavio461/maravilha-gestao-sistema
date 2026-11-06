@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-heading"><div><h1>Nova venda</h1><p>Preencha os dados da venda.</p></div><a class="btn btn-outline-secondary" href="{{url_for('dashboard')}}">Voltar</a></div>
+<div class="form-layout">
+  <section class="surface-card form-card">
+    <div class="form-section-intro"><h2>Dados da venda</h2><span>Campos com * são obrigatórios</span></div>
+    <form method="post" id="sale-form"><input type="hidden" name="_csrf" value="{{csrf_token()}}">
+      <div class="form-body">
+        <div class="field"><label for="client_id">Cliente <span class="optional">(opcional)</span></label><select class="form-select" id="client_id" name="client_id"><option value="">Consumidor final</option>{% for c in clients %}<option value="{{c.id}}" {% if form.get('client_id') == c.id|string %}selected{% endif %}>{{c.name}}</option>{% endfor %}</select><a href="{{url_for('clients')}}" class="inline-link">Cadastrar cliente</a></div>
+        <div class="field"><label for="description">Materiais vendidos *</label><textarea class="form-control" id="description" name="description" required maxlength="600" rows="3" placeholder="Ex.: 10 sacos de cimento, 2 tubos PVC...">{{form.get('description','')}}</textarea></div>
+        <div class="field-row">
+          <div class="field"><label for="amount">Valor total (R$) *</label><div class="money-input"><span aria-hidden="true">R$</span><input id="amount" name="amount" required class="form-control" inputmode="decimal" maxlength="20" placeholder="0,00" value="{{form.get('amount','')}}"></div></div>
+          <div class="field"><label for="sale_date">Data da venda *</label><input id="sale_date" type="date" name="sale_date" required class="form-control" value="{{form.get('sale_date',today())}}"></div>
+        </div>
+        <div class="form-divider"></div>
+        <div class="order-toggle"><div><div class="toggle-title">Incluir encomenda</div><p>Para pedidos que serão atendidos depois.</p></div><label class="switch" for="has_order"><input type="checkbox" role="switch" id="has_order" name="has_order" value="1" {% if form.get('has_order') %}checked{% endif %} aria-controls="order-fields"><span class="switch-slider"></span><span class="visually-hidden">Incluir encomenda</span></label></div>
+        <div id="order-fields" class="nested-fields" {% if not form.get('has_order') %}hidden{% endif %}>
+          <div class="field"><label for="expected_date">Data prevista *</label><input type="date" class="form-control" id="expected_date" name="expected_date" value="{{form.get('expected_date','')}}"></div>
+          <div class="field"><label for="notes">Observações <span class="optional">(opcional)</span></label><textarea class="form-control" id="notes" name="notes" rows="2" maxlength="400" placeholder="Informações sobre o pedido">{{form.get('notes','')}}</textarea></div>
+          <div class="field"><label for="delivery_address">Endereço de entrega <span class="optional">(se houver)</span></label><input class="form-control" id="delivery_address" name="delivery_address" maxlength="240" placeholder="Rua, número, bairro" value="{{form.get('delivery_address','')}}"></div>
+        </div>
+      </div>
+      <div class="form-actions"><a href="{{url_for('dashboard')}}" class="btn btn-outline-secondary btn-lg">Cancelar</a><button class="btn btn-primary btn-lg" type="submit">Salvar venda</button></div>
+    </form>
+  </section>
+</div>
+{% endblock %}

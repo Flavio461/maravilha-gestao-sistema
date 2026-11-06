@@ -1,0 +1,6 @@
+{% extends 'base.html' %}{% block content %}
+<div class="page-heading"><div><span class="eyebrow">CONTROLE DE VENDAS</span><h1>Vendas registradas</h1><p>Consulte os lançamentos e acompanhe os pagamentos.</p></div><a class="btn btn-primary btn-lg" href="{{url_for('sale_new')}}">Nova venda</a></div>
+<section class="surface-card"><div class="section-heading"><div><h2>Histórico recente</h2><p></p></div><span class="count-chip">{{sales|length}} vendas</span></div>
+<div class="table-responsive"><table class="data-table"><thead><tr><th>NÚMERO</th><th>CLIENTE</th><th>DATA</th><th>VALOR</th><th>RECEBIDO</th><th>SITUAÇÃO</th><th></th></tr></thead><tbody>
+{% for sale in sales %}<tr><td><a href="{{url_for('sale_detail',sale_id=sale.id)}}" class="id-link">#{{'%04d'|format(sale.id)}}</a></td><td>{{sale.client_name or 'Consumidor final'}}</td><td>{{sale.sale_date|date_br}}</td><td class="bold-cell">{{brl(sale.amount_cents)}}</td><td>{{brl(sale.paid)}}</td><td><span class="status-pill {{'status-success' if sale.status=='concluida' else 'status-warning'}}">{{status_label(sale.status)}}</span></td><td><a class="table-arrow" href="{{url_for('sale_detail',sale_id=sale.id)}}" aria-label="Detalhes da venda {{sale.id}}">↗</a></td></tr>{% else %}<tr><td colspan="7" class="empty-cell">Nenhuma venda registrada.</td></tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}

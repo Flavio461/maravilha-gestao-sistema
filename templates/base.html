@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <title>{{ title }} | Maravilha Gestão</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <script defer src="{{ url_for('static', filename='js/app.js') }}"></script>
+</head>
+<body>
+<svg class="svg-definitions" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M5 3h14v18l-3-2-4 2-4-2-3 2V3zM9 8h6M9 12h6"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M16 6a3 3 0 0 1 0 6M17 15a5 5 0 0 1 4 5"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M3 7l9-4 9 4v10l-9 4-9-4V7zM3 7l9 4 9-4M12 11v10"/></symbol>
+  <symbol id="i-truck" viewBox="0 0 24 24"><path d="M3 6h12v11H3V6zM15 10h4l3 4v3h-7v-7z"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9L7 7M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></symbol>
+</svg>
+<a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+<div class="workspace">
+  <aside class="sidebar" id="sidebar" aria-label="Menu principal">
+    <button class="sidebar-close" type="button" aria-label="Fechar menu"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#i-close"/></svg></button>
+    <a class="brand" href="{{ url_for('dashboard') }}" aria-label="Maravilha Gestão, ir ao início">
+      <span class="brand-mark" aria-hidden="true">M</span>
+      <span class="brand-copy"><strong class="brand-name">Maravilha</strong><span class="brand-subtitle">Gestão</span></span>
+    </a>
+    <nav class="nav-menu" aria-label="Navegação principal">
+      <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.endpoint=='dashboard' %}active{% endif %}" {% if request.endpoint=='dashboard' %}aria-current="page"{% endif %}><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#i-grid"/></svg><span>Visão geral</span></a>
+      <a href="{{ url_for('sale_new') }}" class="nav-item {% if request.endpoint=='sale_new' %}active{% endif %}" {% if request.endpoint=='sale_new' %}aria-current="page"{% endif %}><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#i-plus"/></svg><span>Nova venda</span></a>
+      <a href="{{ url_for('sales') }}" class="nav-item {% if request.endpoint in ['sales','sale_detail','payment_new'] %}active{% endif %}" {% if request.endpoint in ['sales','sale_detail','payment_new'] %}aria-current="page"{% endif %}><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#i-receipt"/></svg><span>Vendas</span></a>
+      <a href="{{ url_for('clients') }}" class="nav-item {% if request.endpoint=='clients' %}active{% endif %}" {% if request.endpoint=='clients' %}aria-current="page"{% endif %}><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#i-users"/></svg><span>Clientes</span></a>
+      <a href="{{ url_for('orders') }}" class="nav-item {% if request.endpoint in ['orders','order_status','delivery_create'] %}active{% endif %}" {% if request.endpoint in ['orders','order_status','delivery_create'] %}aria-current="page"{% endif %}><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#i-box"/></svg><span>Encomendas</span></a>
+      <a href="{{ url_for('deliveries') }}" class="nav-item {% if request.endpoint in ['deliveries','delivery_status'] %}active{% endif %}" {% if request.endpoint in ['deliveries','delivery_status'] %}aria-current="page"{% endif %}><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#i-truck"/></svg><span>Entregas</span></a>
+    </nav>
+    {% if user and user.role=='admin' %}
+    <div class="sidebar-section">ADMINISTRAÇÃO</div>
+    <nav class="nav-menu" aria-label="Administração"><a href="{{ url_for('users') }}" class="nav-item {% if request.endpoint=='users' %}active{% endif %}" {% if request.endpoint=='users' %}aria-current="page"{% endif %}><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#i-settings"/></svg><span>Equipe e acessos</span></a></nav>
+    {% endif %}
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-bottom">
+      <div class="user-panel"><span class="user-avatar" aria-hidden="true">{{ (user.display_name[0] if user else 'M') | upper }}</span><span class="user-copy"><strong>{{ user.display_name if user else 'Usuário' }}</strong><small>{{ 'Administrador' if user and user.role=='admin' else 'Funcionário' }}</small></span></div>
+      <a href="{{ url_for('password_change') }}" class="sidebar-logout">Alterar senha</a>
+      <form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button type="submit" class="sidebar-logout">Sair da conta</button></form>
+    </div>
+  </aside>
+  <div class="main-shell">
+    <header class="topbar">
+      <button class="sidebar-toggle" aria-label="Abrir menu" aria-expanded="false" aria-controls="sidebar" type="button"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#i-menu"/></svg></button>
+      <span class="topbar-title">Materiais de Construção Maravilha</span>
+      <span class="topbar-user">{{ user.display_name.split()[0] if user else '' }}</span>
+    </header>
+    <main id="conteudo" class="main-content" tabindex="-1">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div aria-live="polite" role="status" class="flash-stack">
+          {% for category, message in messages %}
+            <div class="flash flash-{{ category }}"><span aria-hidden="true">{{ '✓' if category=='success' else '!' if category=='danger' else 'i' }}</span><span>{{ message }}</span></div>
+          {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+</body>
+</html>

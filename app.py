@@ -5,7 +5,6 @@ Bootstrap de administrador: python -m flask --app app create-admin
 """
 from __future__ import annotations
 
-import hmac
 import os
 import re
 import secrets
@@ -20,6 +19,7 @@ from flask import (Flask, abort, flash, g, redirect, render_template,
                    request, session, url_for)
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from csrf import csrf_token, protect_form
 from database import connect, initialize
 from inventory import create_product, move_stock
 from services import (BusinessError, create_client, create_delivery, create_sale,
@@ -94,11 +94,8 @@ def create_app(test_config=None):
             if g.user is None or not g.user['active']:
                 session.clear()
                 g.user = None
-        if request.method in {'POST', 'PUT', 'PATCH', 'DELETE'}:
-            supplied = request.form.get('_csrf', '')
-            expected = session.get('_csrf', '')
-            if not supplied or not expected or not hmac.compare_digest(supplied, expected):
-                abort(400, description='Formulário expirado. Atualize a página e tente novamente.')
+
+    app.before_request(protect_form)
 
     @app.after_request
     def security_headers(response):
@@ -112,11 +109,6 @@ def create_app(test_config=None):
         )
         response.headers['Cache-Control'] = 'no-store'
         return response
-
-    def csrf_token():
-        if '_csrf' not in session:
-            session['_csrf'] = secrets.token_urlsafe(32)
-        return session['_csrf']
 
     def date_br(value):
         if not value:
@@ -176,7 +168,7 @@ def create_app(test_config=None):
                 session.clear()
                 session.permanent = True
                 session['user_id'] = row['id']
-                session['_csrf'] = secrets.token_urlsafe(32)
+                csrf_token()
                 flash('Bem-vindo(a), ' + row['display_name'].split()[0] + '!', 'success')
                 return redirect(url_for('dashboard'))
             # Mensagem uniforme para evitar revelar se o usuário existe.

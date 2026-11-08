@@ -55,6 +55,15 @@ def test_csrf_rejects_unprotected_post(client):
     assert res.status_code==400
 
 
+def test_csrf_rejects_non_ascii_token(client):
+    login(client)
+    name = 'Cliente com envio inválido'
+    response = client.post('/clientes', data={'_csrf': 'inválido', 'name': name})
+
+    assert response.status_code == 400
+    assert name not in client.get('/clientes').text
+
+
 def test_full_business_flow(client):
     login(client)
     t=token(client.get('/clientes').text)

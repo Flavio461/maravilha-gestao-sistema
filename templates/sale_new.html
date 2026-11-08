@@ -1,15 +1,54 @@
 {% extends 'base.html' %}
+{% macro product_line(index, product_id, quantity) %}
+<div class="stock-line">
+  <div class="field">
+    <label for="product-{{index}}">Produto {{index}} *</label>
+    <select class="form-select stock-product" id="product-{{index}}" name="product_id" required {% if sale_mode!='estoque' %}disabled{% endif %}>
+      <option value="">Selecione um produto</option>
+      {% for product in products %}
+      <option value="{{product.id}}" data-price="{{product.price_cents}}" data-stock="{{product.stock_quantity}}"
+        {% if product_id|string==product.id|string %}selected{% endif %}
+        {% if product.stock_quantity==0 %}disabled{% endif %}>{{product.name}} · {{product.stock_quantity}} un.</option>
+      {% endfor %}
+    </select>
+    <p class="field-hint stock-hint">Selecione para consultar o preço e o estoque.</p>
+  </div>
+  <div class="field">
+    <label for="quantity-{{index}}">Quantidade *</label>
+    <input class="form-control stock-quantity" id="quantity-{{index}}" name="quantity" type="number" min="1" step="1" max="1000000" required value="{{quantity}}" {% if sale_mode!='estoque' %}disabled{% endif %}>
+  </div>
+  <button class="btn btn-outline-secondary remove-product" type="button" aria-label="Remover produto {{index}}">Remover</button>
+</div>
+{% endmacro %}
 {% block content %}
-<div class="page-heading"><div><h1>Nova venda</h1><p>Preencha os dados da venda.</p></div><a class="btn btn-outline-secondary" href="{{url_for('dashboard')}}">Voltar</a></div>
+<div class="page-heading"><div><h1>Nova venda</h1><p>Selecione os materiais, confira o total e salve para registrar o atendimento.</p></div><a class="btn btn-outline-secondary" href="{{url_for('dashboard')}}">Voltar</a></div>
 <div class="form-layout">
   <section class="surface-card form-card">
     <div class="form-section-intro"><h2>Dados da venda</h2><span>Campos com * são obrigatórios</span></div>
     <form method="post" id="sale-form"><input type="hidden" name="_csrf" value="{{csrf_token()}}">
       <div class="form-body">
         <div class="field"><label for="client_id">Cliente <span class="optional">(opcional)</span></label><select class="form-select" id="client_id" name="client_id"><option value="">Consumidor final</option>{% for c in clients %}<option value="{{c.id}}" {% if form.get('client_id') == c.id|string %}selected{% endif %}>{{c.name}}</option>{% endfor %}</select><a href="{{url_for('clients')}}" class="inline-link">Cadastrar cliente</a></div>
-        <div class="field"><label for="description">Materiais vendidos *</label><textarea class="form-control" id="description" name="description" required maxlength="600" rows="3" placeholder="Ex.: 10 sacos de cimento, 2 tubos PVC...">{{form.get('description','')}}</textarea></div>
+        <fieldset class="sale-mode">
+          <legend>Como você vai registrar os materiais?</legend>
+          <label><input type="radio" name="sale_mode" value="estoque" {% if sale_mode=='estoque' %}checked{% endif %}> Selecionar produtos do estoque</label>
+          <label><input type="radio" name="sale_mode" value="manual" {% if sale_mode=='manual' %}checked{% endif %}> Descrever materiais manualmente</label>
+        </fieldset>
+        <section id="stock-materials" aria-label="Produtos da venda" {% if sale_mode!='estoque' %}hidden{% endif %}>
+          {% if not products %}<p class="inventory-note">Primeiro, <a href="{{url_for('products')}}">cadastre os produtos e o estoque inicial</a>.</p>{% endif %}
+          <div id="stock-lines">
+            {% for product_id, quantity in sale_lines %}{{product_line(loop.index,product_id,quantity)}}{% endfor %}
+          </div>
+          <template id="stock-line-template">{{product_line('novo','','1')}}</template>
+          <button class="btn btn-outline-secondary" id="add-product" type="button">Adicionar outro produto</button>
+          <div class="stock-total"><span>Total dos produtos</span><output id="stock-total" aria-live="polite">R$ 0,00</output></div>
+          <p class="field-hint">Ao salvar, as quantidades saem do estoque disponível, inclusive nas encomendas.</p>
+        </section>
+        <div id="manual-materials" {% if sale_mode!='manual' %}hidden{% endif %}>
+          <p class="field-hint">A descrição manual registra o valor da venda sem movimentar o estoque.</p>
+          <div class="field"><label for="description">Materiais vendidos *</label><textarea class="form-control" id="description" name="description" required maxlength="600" rows="3" {% if sale_mode!='manual' %}disabled{% endif %} placeholder="Ex.: 10 sacos de cimento, 2 tubos PVC...">{{form.get('description','')}}</textarea></div>
+          <div class="field"><label for="amount">Valor total (R$) *</label><div class="money-input"><span aria-hidden="true">R$</span><input id="amount" name="amount" required class="form-control" inputmode="decimal" maxlength="20" placeholder="0,00" value="{{form.get('amount','')}}" {% if sale_mode!='manual' %}disabled{% endif %}></div></div>
+        </div>
         <div class="field-row">
-          <div class="field"><label for="amount">Valor total (R$) *</label><div class="money-input"><span aria-hidden="true">R$</span><input id="amount" name="amount" required class="form-control" inputmode="decimal" maxlength="20" placeholder="0,00" value="{{form.get('amount','')}}"></div></div>
           <div class="field"><label for="sale_date">Data da venda *</label><input id="sale_date" type="date" name="sale_date" required class="form-control" value="{{form.get('sale_date',today())}}"></div>
         </div>
         <div class="form-divider"></div>

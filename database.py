@@ -58,11 +58,37 @@ CREATE TABLE IF NOT EXISTS deliveries (
     delivered_on TEXT,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+CREATE TABLE IF NOT EXISTS products (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE COLLATE NOCASE CHECK(length(trim(name)) BETWEEN 2 AND 100),
+    price_cents INTEGER NOT NULL CHECK(price_cents > 0),
+    stock_quantity INTEGER NOT NULL DEFAULT 0 CHECK(stock_quantity >= 0),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS sale_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sale_id INTEGER NOT NULL REFERENCES sales(id) ON DELETE RESTRICT,
+    product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
+    product_name TEXT NOT NULL,
+    quantity INTEGER NOT NULL CHECK(quantity > 0),
+    unit_price_cents INTEGER NOT NULL CHECK(unit_price_cents > 0),
+    UNIQUE(sale_id, product_id)
+);
+CREATE TABLE IF NOT EXISTS stock_movements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
+    quantity_delta INTEGER NOT NULL CHECK(quantity_delta != 0),
+    reason TEXT NOT NULL,
+    sale_id INTEGER REFERENCES sales(id) ON DELETE RESTRICT,
+    created_by INTEGER REFERENCES users(id) ON DELETE RESTRICT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 CREATE INDEX IF NOT EXISTS idx_sales_date ON sales(sale_date DESC);
 CREATE INDEX IF NOT EXISTS idx_sales_client ON sales(client_id);
 CREATE INDEX IF NOT EXISTS idx_payments_sale ON payments(sale_id);
 CREATE INDEX IF NOT EXISTS idx_orders_status_date ON orders(status, expected_date);
 CREATE INDEX IF NOT EXISTS idx_deliveries_status ON deliveries(status);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_product ON stock_movements(product_id, id DESC);
 """
 
 

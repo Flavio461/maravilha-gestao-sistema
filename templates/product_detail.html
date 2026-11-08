@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-heading">
+  <div><h1>{{product.name}}</h1><p>Registre o que entrou ou saiu e consulte o histórico do produto.</p></div>
+  <a class="btn btn-outline-secondary" href="{{url_for('products')}}">Voltar aos produtos</a>
+</div>
+<div class="inventory-summary">
+  <div class="metric-card"><div class="metric-top">Disponível para venda</div><div class="metric-value">{{product.stock_quantity}} un.</div></div>
+  <div class="metric-card"><div class="metric-top">Preço unitário</div><div class="metric-value">{{brl(product.price_cents)}}</div></div>
+</div>
+<div class="inventory-layout">
+  <section class="surface-card">
+    <div class="section-heading"><h2>Histórico do estoque</h2></div>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead><tr><th>DATA</th><th>MOVIMENTAÇÃO</th><th>MOTIVO</th><th>RESPONSÁVEL</th></tr></thead>
+        <tbody>
+          {% for movement in movements %}
+          <tr>
+            <td>{{movement.created_at|date_br}}</td>
+            <td>{{'+' if movement.quantity_delta>0 else ''}}{{movement.quantity_delta}} un.</td>
+            <td>
+              {% if movement.sale_id %}<a href="{{url_for('sale_detail',sale_id=movement.sale_id)}}">{{movement.reason}}</a>
+              {% else %}{{movement.reason}}{% endif %}
+            </td>
+            <td>{{movement.user_name or 'Não informado'}}</td>
+          </tr>
+          {% else %}<tr><td colspan="4" class="empty-cell">Este produto ainda não tem movimentações.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="inventory-note">As vendas com produtos cadastrados baixam o estoque automaticamente, inclusive quando há encomenda. São exibidas as últimas 100 movimentações.</p>
+  </section>
+  <aside class="surface-card">
+    <div class="section-heading"><h2>Movimentar estoque</h2></div>
+    <form method="post" class="small-form">
+      <input type="hidden" name="_csrf" value="{{csrf_token()}}">
+      <div class="field">
+        <label for="movement">O que aconteceu? *</label>
+        <select class="form-select" id="movement" name="movement" required>
+          <option value="entrada" {% if form.get('movement')=='entrada' %}selected{% endif %}>Entrada de mercadoria</option>
+          <option value="saida" {% if form.get('movement')=='saida' %}selected{% endif %}>Saída, perda ou correção</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="quantity">Quantidade (unidades) *</label>
+        <input class="form-control" id="quantity" name="quantity" type="number" min="1" max="1000000" step="1" required value="{{form.get('quantity','')}}">
+      </div>
+      <div class="field">
+        <label for="reason">Motivo *</label>
+        <input class="form-control" id="reason" name="reason" required minlength="3" maxlength="240" value="{{form.get('reason','')}}" placeholder="Ex.: Recebimento do fornecedor">
+      </div>
+      <button class="btn btn-primary btn-fill" type="submit">Atualizar estoque</button>
+    </form>
+  </aside>
+</div>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-heading">
+  <div><h1>Produtos e estoque</h1><p>Cadastre os materiais da loja e acompanhe o que está disponível para vender.</p></div>
+  <a class="btn btn-primary" href="{{url_for('sale_new')}}">Registrar venda</a>
+</div>
+<div class="inventory-layout">
+  <section class="surface-card">
+    <div class="section-heading"><h2>Produtos cadastrados</h2></div>
+    <form class="inventory-search" method="get" role="search">
+      <label class="visually-hidden" for="product-search">Buscar produto pelo nome</label>
+      <input id="product-search" class="form-control" name="q" value="{{query}}" placeholder="Buscar produto pelo nome">
+      <button class="btn btn-outline-secondary" type="submit">Buscar</button>
+    </form>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead><tr><th>PRODUTO</th><th>PREÇO UNITÁRIO</th><th>DISPONÍVEL</th><th>AÇÃO</th></tr></thead>
+        <tbody>
+          {% for product in products %}
+          <tr>
+            <td><strong>{{product.name}}</strong></td>
+            <td>{{brl(product.price_cents)}}</td>
+            <td><span class="status-pill {{'status-warning' if product.stock_quantity==0 else 'status-success'}}">{{product.stock_quantity}} un.{% if product.stock_quantity==0 %} · Sem estoque{% endif %}</span></td>
+            <td><a class="text-action" href="{{url_for('product_detail',product_id=product.id)}}" aria-label="Movimentar estoque de {{product.name}}">Movimentar estoque</a></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="empty-cell">{{'Nenhum produto encontrado.' if query else 'Comece cadastrando um produto no formulário ao lado.'}}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="inventory-note">Até 100 produtos por consulta. Use a busca para localizar um material.</p>
+  </section>
+  <aside class="surface-card">
+    <div class="section-heading"><div><h2>Cadastrar produto</h2><p>Use a unidade que você vende, como saco, tubo ou lata.</p></div></div>
+    <form method="post" class="small-form">
+      <input type="hidden" name="_csrf" value="{{csrf_token()}}">
+      <div class="field">
+        <label for="name">Nome do produto *</label>
+        <input class="form-control" id="name" name="name" required minlength="2" maxlength="100" value="{{form.get('name','')}}" placeholder="Ex.: Cimento CP II — saco de 50 kg">
+      </div>
+      <div class="field">
+        <label for="price">Preço unitário (R$) *</label>
+        <input class="form-control" id="price" name="price" required inputmode="decimal" maxlength="20" value="{{form.get('price','')}}" placeholder="0,00">
+      </div>
+      <div class="field">
+        <label for="opening_stock">Estoque inicial (unidades) *</label>
+        <input class="form-control" id="opening_stock" name="opening_stock" type="number" min="0" max="1000000" step="1" required value="{{form.get('opening_stock','0')}}">
+        <p class="field-hint">Conte quantas unidades estão disponíveis para venda.</p>
+      </div>
+      <button class="btn btn-primary btn-fill" type="submit">Cadastrar produto</button>
+    </form>
+  </aside>
+</div>
+{% endblock %}

@@ -21,6 +21,7 @@ from flask import (Flask, abort, flash, g, redirect, render_template,
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from database import connect, initialize
+from inventory import create_product, move_stock
 from services import (BusinessError, create_client, create_delivery, create_sale,
                       positive_cents_to_brl, register_payment,
                       update_delivery_status, update_order_status)
@@ -229,6 +230,51 @@ def create_app(test_config=None):
         rows = db().execute('SELECT * FROM clients ORDER BY id DESC LIMIT 100').fetchall()
         return render_template('clients.html', title='Clientes', clients=rows)
 
+    @app.route('/produtos', methods=['GET', 'POST'])
+    @login_required
+    def products():
+        form = request.form if request.method == 'POST' else {}
+        status = 200
+        if request.method == 'POST':
+            try:
+                product_id = create_product(
+                    db(), form.get('name', ''), form.get('price', ''),
+                    form.get('opening_stock', '0'), g.user['id'])
+                flash('Produto cadastrado. Você já pode registrar vendas e entradas de mercadoria.', 'success')
+                return redirect(url_for('product_detail', product_id=product_id))
+            except BusinessError as exc:
+                flash(str(exc), 'danger')
+                status = 400
+        query = request.args.get('q', '').strip()[:100]
+        rows = db().execute(
+            'SELECT * FROM products WHERE name LIKE ? ORDER BY name LIMIT 100',
+            ('%' + query + '%',)).fetchall()
+        return render_template('products.html', title='Produtos e estoque',
+                               products=rows, query=query, form=form), status
+
+    @app.route('/produtos/<int:product_id>', methods=['GET', 'POST'])
+    @login_required
+    def product_detail(product_id):
+        product = db().execute('SELECT * FROM products WHERE id=?', (product_id,)).fetchone()
+        if not product:
+            abort(404)
+        form = request.form if request.method == 'POST' else {}
+        status = 200
+        if request.method == 'POST':
+            try:
+                move_stock(db(), product_id, form.get('movement', ''),
+                           form.get('quantity', ''), form.get('reason', ''), g.user['id'])
+                flash('Estoque atualizado. A movimentação ficou registrada no histórico.', 'success')
+                return redirect(url_for('product_detail', product_id=product_id))
+            except BusinessError as exc:
+                flash(str(exc), 'danger')
+                status = 400
+        movements = db().execute('''SELECT m.*, u.display_name AS user_name
+            FROM stock_movements m LEFT JOIN users u ON u.id=m.created_by
+            WHERE m.product_id=? ORDER BY m.id DESC LIMIT 100''', (product_id,)).fetchall()
+        return render_template('product_detail.html', title=product['name'], product=product,
+                               movements=movements, form=form), status
+
     @app.get('/vendas')
     @login_required
     def sales():
@@ -241,8 +287,22 @@ def create_app(test_config=None):
     @login_required
     def sale_new():
         clients_rows = db().execute('SELECT id, name FROM clients ORDER BY name LIMIT 500').fetchall()
+        products_rows = db().execute('SELECT * FROM products ORDER BY name').fetchall()
+        sale_lines = list(zip(request.form.getlist('product_id'), request.form.getlist('quantity')))
+        mode = request.form.get('sale_mode', 'manual') if request.method == 'POST' else (
+            'estoque' if products_rows else 'manual')
+        display_mode = mode if mode in {'manual', 'estoque'} else (
+            'estoque' if products_rows else 'manual')
+        sale_context = dict(clients=clients_rows, products=products_rows,
+                            sale_lines=sale_lines or [('', '1')], sale_mode=display_mode)
         if request.method == 'POST':
             try:
+                if mode not in {'manual', 'estoque'}:
+                    raise BusinessError('Escolha como registrar os materiais da venda.')
+                if mode == 'estoque' and (
+                    len(request.form.getlist('product_id')) != len(request.form.getlist('quantity'))
+                ):
+                    raise BusinessError('Confira os produtos e as quantidades da venda.')
                 client_id = request.form.get('client_id') or None
                 has_order = request.form.get('has_order') == '1'
                 sale_id = create_sale(
@@ -253,15 +313,17 @@ def create_app(test_config=None):
                     created_by=g.user['id'], has_order=has_order,
                     expected_date=request.form.get('expected_date'),
                     notes=request.form.get('notes', ''),
-                    delivery_address=request.form.get('delivery_address', '')
+                    delivery_address=request.form.get('delivery_address', ''),
+                    items=sale_lines if mode == 'estoque' else None
                 )
-                flash('Venda registrada com sucesso.', 'success')
+                flash('Venda registrada e estoque atualizado.' if mode == 'estoque'
+                      else 'Venda registrada com sucesso.', 'success')
                 return redirect(url_for('sale_detail', sale_id=sale_id, criado=1))
             except (BusinessError, ValueError) as exc:
                 flash(str(exc), 'danger')
-                return render_template('sale_new.html', title='Nova venda', clients=clients_rows,
+                return render_template('sale_new.html', title='Nova venda', **sale_context,
                                        form=request.form), 400
-        return render_template('sale_new.html', title='Nova venda', clients=clients_rows, form={})
+        return render_template('sale_new.html', title='Nova venda', **sale_context, form={})
 
     @app.get('/vendas/<int:sale_id>')
     @login_required
@@ -275,9 +337,10 @@ def create_app(test_config=None):
         paid = sum(p['amount_cents'] for p in payments)
         order = db().execute('SELECT * FROM orders WHERE sale_id=?', (sale_id,)).fetchone()
         delivery = db().execute('SELECT * FROM deliveries WHERE order_id=?', (order['id'],)).fetchone() if order else None
+        items = db().execute('SELECT * FROM sale_items WHERE sale_id=? ORDER BY id', (sale_id,)).fetchall()
         return render_template('sale_detail.html', title=f'Venda #{sale_id:04d}', sale=sale,
                                payments=payments, paid=paid, remaining=max(0, sale['amount_cents']-paid),
-                               order=order, delivery=delivery)
+                               order=order, delivery=delivery, items=items)
 
     @app.post('/vendas/<int:sale_id>/pagamentos')
     @login_required

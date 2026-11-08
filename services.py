@@ -61,9 +61,11 @@ def create_client(conn: Connection, name: str, phone: str | None = None) -> int:
 def create_sale(conn: Connection, *, client_id: int | None, description: str,
                 amount: str, sale_date: str, created_by: int | None,
                 has_order: bool = False, expected_date: str | None = None,
-                notes: str = '', delivery_address: str = '') -> int:
-    description = text_required(description, 'Descrição dos materiais', 3, 600)
-    amount_cents = money_to_cents(amount)
+                notes: str = '', delivery_address: str = '',
+                items: list[tuple[str, str]] | None = None) -> int:
+    if items is None:
+        description = text_required(description, 'Descrição dos materiais', 3, 600)
+        amount_cents = money_to_cents(amount)
     sale_date = valid_date(sale_date, 'Data da venda')
     notes = (notes or '').strip()
     if len(notes) > 400:
@@ -88,10 +90,22 @@ def create_sale(conn: Connection, *, client_id: int | None, description: str,
     # Um único commit preserva a integridade entre venda, encomenda e entrega.
     conn.execute('BEGIN IMMEDIATE')
     try:
+        if items is not None:
+            # Import local evita dependência circular entre as validações comuns e o estoque.
+            from inventory import prepare_sale_items, record_sale_items
+            selected = prepare_sale_items(conn, items)
+            amount_cents = sum(item['quantity'] * item['price_cents'] for item in selected)
+            if amount_cents > 999999999:
+                raise BusinessError('O total da venda excede o valor permitido.')
+            description = '; '.join(
+                f"{item['quantity']} × {item['name']}" for item in selected
+            )[:600]
         cur = conn.execute('''INSERT INTO sales
             (client_id, description, amount_cents, sale_date, created_by)
             VALUES (?,?,?,?,?)''', (client_id, description, amount_cents, sale_date, created_by))
         sale_id = int(cur.lastrowid)
+        if items is not None:
+            record_sale_items(conn, sale_id, selected, created_by)
         if has_order:
             order = conn.execute('''INSERT INTO orders (sale_id, expected_date, notes)
                 VALUES (?,?,?)''', (sale_id, expected_date, notes))

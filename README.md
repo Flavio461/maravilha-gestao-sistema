@@ -5,11 +5,20 @@ Um sistema web para organizar a rotina da Materiais de Construção Maravilha, e
 ## O que dá para fazer
 
 - Cadastrar clientes e registrar vendas.
+- Cadastrar produtos, registrar entradas e saídas e consultar o estoque disponível.
+- Vender produtos cadastrados com cálculo do total e baixa automática no estoque.
 - Anotar pagamentos e conferir quanto falta receber em cada venda.
 - Acompanhar encomendas e entregas.
 - Gerenciar o acesso dos funcionários.
 
 O sistema roda no próprio computador da loja. Foi feito com Python, Flask, SQLite e Bootstrap.
+
+No painel inicial, siga os atalhos em **Por onde começar**. Em **Produtos e estoque**,
+cadastre cada material com preço e quantidade inicial. Abra **Movimentar estoque**
+para registrar recebimentos ou perdas. Em **Nova venda**, selecione um ou mais
+produtos e informe as quantidades. Ao salvar, o sistema calcula o total e baixa
+o estoque disponível. As quantidades são em unidades inteiras, como sacos, tubos
+e latas. Vendas com descrição manual registram apenas o valor do atendimento.
 
 ## Como rodar
 

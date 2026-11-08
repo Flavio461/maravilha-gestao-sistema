@@ -38,4 +38,17 @@
 
 ## Limites do projeto
 
-Sem emissão de NF-e, integrações bancárias, aplicativo nativo, hospedagem em nuvem e estoque detalhado. Foco na utilidade para os funcionários da pequena loja.
+O estoque básico usa `products` para produtos, preço e saldo disponível,
+`sale_items` para os itens e preços registrados em cada venda e
+`stock_movements` para entradas, saídas e baixas vinculadas às vendas.
+As tabelas são criadas também em bancos existentes. Vendas anteriores continuam
+disponíveis com sua descrição e seus pagamentos.
+
+Uma venda com produtos abre uma transação `BEGIN IMMEDIATE`, valida o saldo,
+registra os itens e baixa o estoque junto com a venda, a encomenda e a entrega.
+Uma falha desfaz a operação inteira. O módulo `inventory.py` concentra as regras
+de produtos e movimentações. Quantidades são inteiras e o saldo representa o
+que está disponível para venda, incluindo a baixa dos itens encomendados.
+
+Sem emissão de NF-e, integrações bancárias, aplicativo nativo e hospedagem em nuvem.
+Foco na utilidade para os funcionários da pequena loja.

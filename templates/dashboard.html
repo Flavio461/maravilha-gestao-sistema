@@ -4,6 +4,23 @@
   <div><h1>Visão geral</h1><p>Acompanhe as atividades da loja.</p></div>
   <a class="btn btn-primary btn-lg" href="{{url_for('sale_new')}}"><svg class="ui-icon" aria-hidden="true"><use href="#i-plus"/></svg>Nova venda</a>
 </div>
+<section class="start-section" aria-labelledby="start-title">
+  <h2 id="start-title">Por onde começar</h2>
+  <div class="start-grid">
+    <a class="start-card" href="{{url_for('products')}}">
+      <strong>1. Cadastre os produtos</strong>
+      <span>Informe o preço e a quantidade disponível. Depois, registre as entradas de mercadoria.</span>
+    </a>
+    <a class="start-card" href="{{url_for('sale_new')}}">
+      <strong>2. Registre uma venda</strong>
+      <span>Escolha os produtos e as quantidades. O total e a baixa no estoque são calculados ao salvar.</span>
+    </a>
+    <a class="start-card" href="{{url_for('orders')}}">
+      <strong>3. Acompanhe os pedidos</strong>
+      <span>Confira as encomendas e as entregas. Para receber um pagamento, abra a venda correspondente.</span>
+    </a>
+  </div>
+</section>
 <div class="metrics-grid">
   <div class="metric-card"><div class="metric-top">Total em vendas</div><div class="metric-value">{{brl(metrics.total_sold)}}</div></div>
   <div class="metric-card"><div class="metric-top">Pagamentos recebidos</div><div class="metric-value">{{brl(metrics.total_received)}}</div></div>

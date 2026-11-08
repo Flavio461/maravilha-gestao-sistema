@@ -86,3 +86,66 @@ def test_xss_escaped_in_page(client):
     res=client.get('/clientes').text
     assert '&lt;script&gt;' in res
     assert payload not in res
+
+
+def test_products_and_stock_sale_flow(client):
+    login(client)
+    csrf = token(client.get('/produtos').text)
+    response = client.post('/produtos', data={
+        '_csrf': csrf, 'name': 'Cimento 50 kg', 'price': '42,00', 'opening_stock': '10',
+    })
+    assert response.status_code == 302
+    assert response.headers['Location'].endswith('/produtos/1')
+    csrf = token(client.get('/produtos/1').text)
+    response = client.post('/produtos/1', data={
+        '_csrf': csrf, 'movement': 'entrada', 'quantity': '5', 'reason': 'Recebimento',
+    })
+    assert response.status_code == 302
+    csrf = token(client.get('/vendas/nova').text)
+    response = client.post('/vendas/nova', data={
+        '_csrf': csrf, 'sale_mode': 'estoque', 'product_id': '1', 'quantity': '3',
+        'amount': '0,01', 'sale_date': '2026-11-08',
+    })
+    assert response.status_code == 302
+    result = client.get(response.headers['Location']).text
+    assert 'R$ 126,00' in result
+    assert 'Cimento 50 kg' in result
+    assert '12 un.' in client.get('/produtos/1').text
+
+
+def test_stock_sale_error_preserves_form_and_quantity(client):
+    login(client)
+    csrf = token(client.get('/produtos').text)
+    client.post('/produtos', data={
+        '_csrf': csrf, 'name': 'Cimento', 'price': '42,00', 'opening_stock': '2',
+    })
+    csrf = token(client.get('/vendas/nova').text)
+    response = client.post('/vendas/nova', data={
+        '_csrf': csrf, 'sale_mode': 'estoque', 'product_id': '1', 'quantity': '3',
+        'sale_date': '2026-11-08',
+    })
+    assert response.status_code == 400
+    assert 'há 2 unidade(s) disponíveis' in response.text
+    assert 'value="3"' in response.text
+    assert '2 un.' in client.get('/produtos/1').text
+    assert 'Nenhuma venda registrada' in client.get('/vendas').text
+
+
+def test_inventory_requires_login_and_csrf(client):
+    assert client.get('/produtos').status_code == 302
+    login(client)
+    assert client.post('/produtos', data={'name': 'Teste'}).status_code == 400
+
+
+@pytest.mark.parametrize('fields', [
+    {'sale_mode': 'desconhecido'},
+    {'sale_mode': 'estoque', 'product_id': '1'},
+    {'sale_mode': 'estoque'},
+])
+def test_incomplete_stock_sale_is_rejected(client, fields):
+    login(client)
+    fields = dict(fields, _csrf=token(client.get('/vendas/nova').text), sale_date='2026-11-08')
+    response = client.post('/vendas/nova', data=fields)
+    assert response.status_code == 400
+    assert 'Como você vai registrar os materiais?' in response.text
+    assert 'Nenhuma venda registrada' in client.get('/vendas').text

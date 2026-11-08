@@ -7,6 +7,18 @@
     <div class="section-heading result-title"><h2>Resumo da venda</h2><span class="status-pill {{'status-success' if remaining==0 else 'status-warning'}}">{{'Pago' if remaining==0 else 'Pagamento pendente'}}</span></div>
     <div class="result-client"><span class="result-label">Cliente</span><strong>{{sale.client_name or 'Consumidor final'}}</strong></div>
     <div class="result-client"><span class="result-label">Materiais</span><strong>{{sale.description}}</strong></div>
+    {% if items %}
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead><tr><th>PRODUTO</th><th>QUANTIDADE</th><th>PREÇO UNITÁRIO</th><th>SUBTOTAL</th></tr></thead>
+        <tbody>
+          {% for item in items %}
+          <tr><td>{{item.product_name}}</td><td>{{item.quantity}} un.</td><td>{{brl(item.unit_price_cents)}}</td><td>{{brl(item.quantity*item.unit_price_cents)}}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
     <div class="payment-summary"><div><span>Valor total</span><strong>{{brl(sale.amount_cents)}}</strong></div><div><span>Recebido</span><strong>{{brl(paid)}}</strong></div><div class="remaining-line"><span>Saldo a receber</span><strong>{{brl(remaining)}}</strong></div></div>
     {% if order %}<div class="linked-order"><div class="linked-title"><div><strong>Encomenda #{{'%04d'|format(order.id)}}</strong><p>Prevista para {{order.expected_date|date_br}}</p></div></div><span class="status-pill status-warning">{{status_label(order.status)}}</span></div>
       {% if delivery %}<div class="linked-delivery"><span>Entrega</span><strong>{{status_label(delivery.status)}}</strong><small>{{delivery.address}}</small></div>{% endif %}

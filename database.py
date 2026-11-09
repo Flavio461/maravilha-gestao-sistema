@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 
 
@@ -104,5 +105,5 @@ def connect(db_path: str | Path) -> sqlite3.Connection:
 
 
 def initialize(db_path: str | Path) -> None:
-    with connect(db_path) as conn:
+    with closing(connect(db_path)) as conn:
         conn.executescript(SCHEMA)

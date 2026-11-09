@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: maravilha-gestao-demo
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python demo.py
+    healthCheckPath: /healthz
+    envVars:
+      - key: APP_SECRET
+        generateValue: true
+      - key: COOKIE_SECURE
+        value: "1"

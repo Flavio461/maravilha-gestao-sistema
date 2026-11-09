@@ -10,7 +10,15 @@
 <main id="main" class="login-wrapper" tabindex="-1">
   <div class="login-card">
     <div class="login-brand"><span class="brand-mark" aria-hidden="true">M</span><div><strong>Maravilha</strong><span>Gestão</span></div></div>
-    <h1>Entrar</h1><p class="muted">Acesse sua conta para continuar.</p>
+    <h1>Entrar</h1>
+    {% if config.DEMO_MODE %}
+    <p class="muted">Conheça o sistema com dados fictícios. Os registros desta demonstração podem ser reiniciados.</p>
+    <form method="post" action="{{ url_for('enter_demo') }}" class="login-form">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <button class="btn btn-primary btn-lg btn-fill" type="submit">Entrar na demonstração</button>
+    </form>
+    {% else %}
+    <p class="muted">Acesse sua conta para continuar.</p>
     {% with msgs=get_flashed_messages(with_categories=true) %}{% for cat,msg in msgs %}<div class="flash flash-{{cat}}" role="status">{{msg}}</div>{% endfor %}{% endwith %}
     <form method="post" class="login-form" autocomplete="on"><input type="hidden" name="_csrf" value="{{csrf_token()}}">
       <div class="field"><label for="username">Usuário</label><input class="form-control" id="username" name="username" placeholder="Seu usuário" autocomplete="username" required autofocus maxlength="80"></div>
@@ -18,6 +26,7 @@
       <button class="btn btn-primary btn-lg btn-fill" type="submit">Entrar</button>
     </form>
     <p class="login-help">Ainda não tem acesso? Fale com o administrador.</p>
+    {% endif %}
   </div>
 </main>
 </body>

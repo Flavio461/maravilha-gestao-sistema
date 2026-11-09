@@ -48,6 +48,21 @@ As telas usam dados fictícios. Veja também o [formulário de venda](docs/captu
 
 ## Para consultar depois
 
+A demonstração pública pode ser hospedada no Render pelo arquivo `render.yaml`,
+ou como Web Service com build `pip install -r requirements.txt` e início
+`python demo.py`. Na configuração manual, selecione a branch `feat/demo-publica`,
+o plano Free, a variável `COOKIE_SECURE=1` e o Health Check Path `/healthz`.
+O botão da tela inicial abre uma conta de demonstração sem acesso à administração.
+O banco `instance/demo-publica.db` contém apenas exemplos e fica separado dos dados
+da loja. No Render gratuito, ele pode ser recriado após suspensão ou reinício do
+serviço. Essa hospedagem serve para demonstração e avaliação.
+
+O endereço `/healthz` verifica a leitura das tabelas de usuários, produtos e vendas.
+Responde `200` e `UP` quando disponível, ou `503` e `DOWN` quando o banco falha.
+Configure esse caminho no Render e acompanhe eventos e logs no painel do serviço.
+A existência do endpoint, sozinha, não configura um monitor externo nem representa
+um histórico de disponibilidade.
+
 - [Guia de uso local](docs/GUIA_LOCAL.md): backups, acesso por outros aparelhos, demonstração e testes.
 - [Arquitetura e modelo de dados](docs/ARQUITETURA_E_MODELO.md): como o sistema funciona por dentro.
 - [Componentes de terceiros](THIRD_PARTY_NOTICES.md): créditos e licença do Bootstrap.

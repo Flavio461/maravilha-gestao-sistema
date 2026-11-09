@@ -88,6 +88,8 @@ def create_app(test_config=None):
     @app.before_request
     def load_identity():
         g.user = None
+        if request.endpoint == 'demo_health':
+            return
         if session.get('user_id'):
             g.user = db().execute('''SELECT id, username, display_name, role, active
                  FROM users WHERE id=?''', (session['user_id'],)).fetchone()
@@ -97,7 +99,7 @@ def create_app(test_config=None):
         if request.method in {'POST', 'PUT', 'PATCH', 'DELETE'}:
             supplied = request.form.get('_csrf', '')
             expected = session.get('_csrf', '')
-            if not supplied or not expected or not hmac.compare_digest(supplied, expected):
+            if not supplied or not expected or not hmac.compare_digest(supplied.encode(), expected.encode()):
                 abort(400, description='Formulário expirado. Atualize a página e tente novamente.')
 
     @app.after_request

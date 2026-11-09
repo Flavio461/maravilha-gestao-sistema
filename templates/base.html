@@ -45,7 +45,7 @@
     <div class="sidebar-spacer"></div>
     <div class="sidebar-bottom">
       <div class="user-panel"><span class="user-avatar" aria-hidden="true">{{ (user.display_name[0] if user else 'M') | upper }}</span><span class="user-copy"><strong>{{ user.display_name if user else 'Usuário' }}</strong><small>{{ 'Administrador' if user and user.role=='admin' else 'Funcionário' }}</small></span></div>
-      <a href="{{ url_for('password_change') }}" class="sidebar-logout">Alterar senha</a>
+      {% if not config.DEMO_MODE %}<a href="{{ url_for('password_change') }}" class="sidebar-logout">Alterar senha</a>{% endif %}
       <form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button type="submit" class="sidebar-logout">Sair da conta</button></form>
     </div>
   </aside>
@@ -56,6 +56,9 @@
       <span class="topbar-user">{{ user.display_name.split()[0] if user else '' }}</span>
     </header>
     <main id="conteudo" class="main-content" tabindex="-1">
+      {% if config.DEMO_MODE %}
+      <div class="flash flash-info" role="note">Demonstração pública. Use apenas dados fictícios. Os registros podem ser reiniciados.</div>
+      {% endif %}
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
           <div aria-live="polite" role="status" class="flash-stack">

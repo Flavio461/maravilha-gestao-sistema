@@ -2,6 +2,7 @@ services:
   - type: web
     name: maravilha-gestao-demo
     runtime: python
+    branch: feat/demo-publica
     plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: python demo.py
